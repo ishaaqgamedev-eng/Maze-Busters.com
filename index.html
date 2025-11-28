@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maze Busters - 20 Levels</title>
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  /* HOME PAGE */
+  #home {
+    text-align: center;
+  }
+  h1 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: gold;
+  }
+  button {
+    background: gold;
+    color: black;
+    font-size: 1.2em;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    margin-top: 15px;
+  }
+  button:active {
+    background: orange;
+  }
+  img{
+       position:absolute;
+       bottom:50%;
+       right:37%;
+       transform:translate(-50%,-35%);
+  }
+  /* GAME PAGE */
+  #game {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+  #maze {
+    display: grid;
+    grid-template-columns: repeat(10, 30px);
+    grid-template-rows: repeat(10, 30px);
+    gap: 2px;
+    margin-bottom: 20px;
+  }
+  .cell {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+  }
+  .wall { background: #333; }
+  .path { background: #eee; }
+  .dest { background: gold; }
+  .player { background: dodgerblue; }
+  .controls {
+    display: grid;
+    grid-template-columns: 60px 60px 60px;
+    grid-template-rows: 60px 60px 60px;
+    gap: 5px;
+    justify-content: center;
+  }
+  .controls button {
+    background: #444;
+    color: white;
+    font-size: 20px;
+  }
+  .controls button:active {
+    background: #666;
+  }
+  #backBtn {
+    background: crimson;
+    color: white;
+    font-size: 1em;
+    padding: 6px 15px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+  }
+  #backBtn:active {
+    background: darkred;
+  }
+</style>
+</head>
+<body>
+
+<!-- HOME PAGE -->
+<div id="home">
+  <h1> Maze Busters</h1>
+  <p>Guide the blue square to the golden goal and use the down arrows to direct the blue square!</p>
+  <button onclick="startGame()">Play</button>
+  <img src="maze1.jpg" width="200px" heigh="200px">
+</div>
+
+<!-- GAME PAGE -->
+<div id="game">
+  <div id="levelDisplay">Level 1</div>
+  <div id="maze"></div>
+  <div class="controls">
+    <div></div>
+    <button onclick="move('up')">|</button>
+    <div></div>
+    <button onclick="move('left')"><=</button>
+    <div></div>
+    <button onclick="move('right')">=></button>
+    <div></div>
+    <button onclick="move('down')">|</button>
+    <div></div>
+  </div>
+  <button id="backBtn" onclick="goHome()"> Home</button>
+</div>
+
+<script>
+// === LEVELS SETUP ===
+const levels = [
+  [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,0,1,1,1,1,0,1,0,1],
+        [1,0,1,0,0,1,0,0,0,1],
+        [1,0,1,0,1,1,1,1,0,1],
+        [1,0,1,0,0,0,0,1,0,1],
+        [1,1,1,0,1,0,1,1,0,1],
+        [1,2,0,0,1,0,1,0,0,1],
+        [1,1,1,0,1,0,0,0,1,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,0,0,0,0,0,0,1],
+        [1,0,0,0,1,1,1,1,0,1],
+        [1,0,1,0,1,0,0,0,0,1],
+        [1,0,1,0,1,0,1,1,1,1],
+        [1,1,1,1,1,0,0,0,0,1],
+        [1,0,0,0,1,1,1,0,1,1],
+        [1,0,1,0,1,0,0,0,0,1],
+        [1,2,1,0,0,0,1,1,1,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,0,0,0,0,0,0,1],
+        [1,0,1,1,0,1,1,1,1,1],
+        [1,0,1,0,0,0,0,1,0,1],
+        [1,0,0,0,1,1,0,1,0,1],
+        [1,0,1,0,1,0,0,0,0,1],
+        [1,1,1,0,1,0,1,0,1,1],
+        [1,2,1,1,1,1,1,0,1,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,0,0,0,1,1,0,1],
+        [1,0,1,0,1,0,0,0,0,1],
+        [1,0,1,0,1,1,1,1,1,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,0,1,2,1,0,1,1],
+        [1,0,0,0,1,1,1,0,1,1],
+        [1,0,1,1,1,0,0,0,0,1],
+        [1,0,0,0,0,0,1,1,1,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,1,0,1,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,0,1,1,1,0,1,1,1,1],
+        [1,0,1,0,1,0,1,0,2,1],
+        [1,0,1,0,0,0,1,0,1,1],
+        [1,1,1,0,1,1,1,0,1,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,0,1,1,1,1,0,1,0,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,0,1,1,1,1,0,1,0,1],
+        [1,0,1,1,0,0,0,1,0,1],
+        [1,0,0,0,0,1,0,1,0,1],
+        [1,1,1,1,1,1,1,1,0,1],
+        [1,2,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,0,0,0,0,0,0,1],
+        [1,0,1,0,1,1,0,1,1,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,0,1,1,0,1,0,1,1,1],
+        [1,0,1,1,0,1,0,1,0,1],
+        [1,0,2,1,0,1,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,2,0,1,1,1,0,1],
+        [1,0,1,1,0,0,1,1,0,1],
+        [1,0,0,1,1,0,0,0,0,1],
+        [1,1,0,0,1,1,1,1,0,1],
+        [1,1,1,0,0,0,0,1,0,1],
+        [1,0,0,0,1,1,0,1,0,1],
+        [1,0,1,1,1,1,0,1,0,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,0,0,0,0,0,0,1],
+        [1,0,1,0,1,1,1,1,0,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,1,1,0,1,1,1,1,0,1],
+        [1,0,0,0,0,0,1,2,0,1],
+        [1,0,1,1,1,1,1,1,1,1],
+        [1,0,1,1,1,0,0,0,0,1],
+        [1,0,0,0,0,0,1,1,1,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,1,0,0,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,0,1,0,1,1],
+        [1,0,0,0,1,0,1,0,1,1],
+        [1,0,1,0,1,1,1,0,1,1],
+        [1,2,1,0,0,0,1,0,0,1],
+        [1,1,1,1,1,0,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,1,0,0,0,0,0,1],
+        [1,0,1,2,1,1,0,1,0,1],
+        [1,0,1,0,0,0,0,1,0,1],
+        [1,0,1,1,1,0,1,0,0,1],
+        [1,0,0,0,1,0,1,0,1,1],
+        [1,1,1,0,1,0,1,0,0,1],
+        [1,0,0,0,1,1,1,1,0,1],
+        [1,0,1,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,0,0,0,1,0,0,1],
+        [1,0,1,0,1,1,1,0,1,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,1,0,1,1,1,0,1,0,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,0,1,1,1,1,1,1,0,1],
+        [1,0,0,0,0,1,2,1,0,1],
+        [1,1,0,1,0,1,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,1,0,0,1,0,1],
+        [1,1,1,0,1,0,1,1,0,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,1,1,1,1,1,0,0,0,1],
+        [1,0,0,0,0,0,1,1,0,1],
+        [1,1,0,1,1,0,0,0,0,1],
+        [1,0,0,0,1,0,1,1,1,1],
+        [1,2,1,0,1,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,1,0,0,0,1,0,1],
+        [1,0,1,1,0,1,0,0,0,1],
+        [1,0,0,0,0,1,1,1,0,1],
+        [1,1,1,1,0,1,0,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1],
+        [1,0,1,1,0,1,1,1,1,1],
+        [1,0,0,1,1,1,0,0,0,1],
+        [1,1,0,0,0,0,0,0,2,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,0,0,0,1,0,0,1],
+        [1,0,1,0,1,0,0,0,1,1],
+        [1,0,0,0,1,1,1,0,0,1],
+        [1,1,1,0,0,0,1,0,1,1],
+        [1,2,1,0,1,1,1,0,0,1],
+        [1,0,1,0,1,0,0,1,0,1],
+        [1,0,1,1,1,1,0,0,0,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,1,1,0,0,0,1],
+        [1,1,1,0,0,0,0,1,0,1],
+        [1,0,0,0,1,0,1,1,1,1],
+        [1,0,1,0,0,0,0,0,0,1],
+        [1,0,1,1,1,1,0,1,0,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,1,1,1,1,1,1,0,0,1],
+        [1,2,0,0,0,0,0,0,1,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,1,2,1,0,1],
+        [1,0,1,1,0,1,0,1,0,1],
+        [1,0,1,0,0,1,0,1,0,1],
+        [1,0,1,0,1,1,0,1,0,1],
+        [1,0,0,0,1,1,0,0,0,1],
+        [1,1,1,0,1,0,1,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,0,1,1,1,0,0,1,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,1,2,0,0,1,0,0,1],
+        [1,0,1,1,1,0,1,0,1,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,1,0,1,1,1,1,1,0,1],
+        [1,0,0,0,0,1,0,1,0,1],
+        [1,0,1,1,1,1,0,1,0,1],
+        [1,0,0,0,0,0,0,0,0,1],
+        [1,0,1,1,0,0,1,1,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,1,0,0,0,1,0,1],
+        [1,0,1,1,0,1,0,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1],
+        [1,1,1,1,0,1,1,1,0,1],
+        [1,0,0,0,0,0,0,1,0,1],
+        [1,0,1,0,1,1,1,1,0,1],
+        [1,0,1,0,0,1,2,0,0,1],
+        [1,0,1,0,1,1,1,1,0,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ],
+      [
+        [1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,1,0,0,0,0,1],
+        [1,0,1,0,1,0,1,1,0,1],
+        [1,0,1,0,0,0,0,1,0,1],
+        [1,0,1,1,1,1,1,1,0,1],
+        [1,0,0,0,0,1,0,0,0,1],
+        [1,1,1,1,1,1,0,1,1,1],
+        [1,2,0,0,0,1,0,0,0,1],
+        [1,1,1,1,0,0,0,1,1,1],
+        [1,1,1,1,1,1,1,1,1,1]
+      ]
+
+
+
+
+
+
+
+
+
+
+];
+
+const mazeContainer = document.getElementById("maze");
+let player = {x:1, y:1};
+let currentLevel = 0;
+
+// === DRAW FUNCTION ===
+function drawMaze() {
+  mazeContainer.innerHTML = "";
+  for(let y=0;y<levels[currentLevel].length;y++){
+    for(let x=0;x<levels[currentLevel][y].length;x++){
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      if(x===player.x && y===player.y) cell.classList.add("player");
+      else if(levels[currentLevel][y][x]===1) cell.classList.add("wall");
+      else if(levels[currentLevel][y][x]===0) cell.classList.add("path");
+      else if(levels[currentLevel][y][x]===2) cell.classList.add("dest");
+      mazeContainer.appendChild(cell);
+    }
+  }
+  document.getElementById("levelDisplay").innerText = `Level ${currentLevel+1}`;
+}
+
+// === MOVEMENT ===
+function move(dir){
+  let newX = player.x;
+  let newY = player.y;
+  if(dir==="up") newY--;
+  if(dir==="down") newY++;
+  if(dir==="left") newX--;
+  if(dir==="right") newX++;
+
+  if(levels[currentLevel][newY][newX]===1) return; // wall
+  player.x = newX;
+  player.y = newY;
+
+  if(levels[currentLevel][newY][newX]===2){
+    if(currentLevel < levels.length-1){
+      alert(" Level Complete! Next Level");
+      currentLevel++;
+      player = {x:1, y:1};
+    } else {
+      alert(" Congratulations! You finished all 20 levels! thank you for playing!");
+      alert("A game by M.ishaaq ahamed");
+      goHome();
+      return;
+    }
+  }
+
+  drawMaze();
+}
+
+// === PAGE SWITCH ===
+function startGame(){
+  document.getElementById("home").style.display="none";
+  document.getElementById("game").style.display="flex";
+  player = {x:1, y:1};
+  currentLevel=0;
+  drawMaze();
+}
+
+function goHome(){
+  document.getElementById("home").style.display="block";
+  document.getElementById("game").style.display="none";
+}
+</script>
+
+</body>
+</html>
